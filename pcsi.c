@@ -26,7 +26,7 @@ int main (int argc, char *argv[]) {
 	int total_partial_size;			// number of total elements into arrays xi and yi
 	
 	int *count = NULL;    			// array describing how many elements to send to each process
-    int *displ = NULL;       		// array describing the displacements where each segment begins
+	int *displ = NULL;       		// array describing the displacements where each segment begins
 
 	double *m = NULL;				// H × m = r - unknowns array
 
@@ -58,8 +58,8 @@ int main (int argc, char *argv[]) {
 	MPI_Barrier(MPI_COMM_WORLD);
 	time = - MPI_Wtime();					// Start time counting
 	
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);	// Get the current rank of process
-    MPI_Comm_size(MPI_COMM_WORLD, &p);		// Get the number of processes
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);	// Get the current rank of process
+	MPI_Comm_size(MPI_COMM_WORLD, &p);		// Get the number of processes
 
 
 
@@ -75,7 +75,7 @@ int main (int argc, char *argv[]) {
 		if(fscanf(source, "%d", &n) != 1) {		// Read the number of elements n
 			fprintf(stderr, "Expected one number as input for n value!\n");
 			MPI_Abort(MPI_COMM_WORLD, -1);
-   			return -1;
+			return -1;
 		}
 
 		io_xi = (double*) malloc(n * sizeof(double));
@@ -164,11 +164,11 @@ int main (int argc, char *argv[]) {
 
 	if(rank == 0) {
 		count[0] = array_intervals[0];
-        displ[0] = 0;
-        for(int i = 1; i < p; i++) {
-            count[i] = array_intervals[i];
-            displ[i] = displ[i-1] + count[i-1];
-        }
+		displ[0] = 0;
+		for(int i = 1; i < p; i++) {
+			count[i] = array_intervals[i];
+			displ[i] = displ[i-1] + count[i-1];
+		}
 
 		io_xi = (double*) malloc(total_n * sizeof(double));
 		if(io_xi == NULL) { fprintf(stderr, "Malloc error (io_xi variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return -1; }
@@ -177,7 +177,7 @@ int main (int argc, char *argv[]) {
 		if(io_yi == NULL) { fprintf(stderr, "Malloc error (io_yi variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return -1; }
 		
 
-    }
+	}
 
 	MPI_Gatherv(x, interval, MPI_DOUBLE, io_xi, count, displ, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	MPI_Gatherv(fx, interval, MPI_DOUBLE, io_yi, count, displ, MPI_DOUBLE, 0, MPI_COMM_WORLD);
