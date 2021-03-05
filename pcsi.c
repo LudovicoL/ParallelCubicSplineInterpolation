@@ -5,11 +5,12 @@ int main (int argc, char *argv[]) {
 	
 	/* Variables definition */
 
-	int n;							// number of input elements
-	int p;							// number of processors
-	int rank;						// process rank
-	double time;					// time to execution for each process
-	
+	int n;								// number of input elements
+	int p;								// number of processors
+	int rank;							// process rank
+	double total_time;					// time to execution for each process (includes write to file)
+	double time_without_writing = 0;	// time to execution for each process (excludes write to file)
+
 	FILE *source = NULL;
 	char *filename_input = "./input.txt";		// name of input file (default: "./input.txt")
 	char *filename_output = "./output.txt";		// name of output file (default: "./output.txt")
@@ -25,8 +26,8 @@ int main (int argc, char *argv[]) {
 	int effective_partial_size;		// number of effective elements into arrays xi and yi
 	int total_partial_size;			// number of total elements into arrays xi and yi
 	
-	int *count = NULL;    			// array describing how many elements to send to each process
-	int *displ = NULL;       		// array describing the displacements where each segment begins
+	int *count = NULL;				// array describing how many elements to send to each process
+	int *displ = NULL;				// array describing the displacements where each segment begins
 
 	double *m = NULL;				// H × m = r - unknowns array
 
@@ -56,7 +57,7 @@ int main (int argc, char *argv[]) {
 	/* Start MPI */
 	MPI_Init(&argc, &argv);
 	MPI_Barrier(MPI_COMM_WORLD);
-	time = - MPI_Wtime();					// Start time counting
+	total_time = - MPI_Wtime();				// Start time counting
 	
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);	// Get the current rank of process
 	MPI_Comm_size(MPI_COMM_WORLD, &p);		// Get the number of processes
@@ -182,7 +183,8 @@ int main (int argc, char *argv[]) {
 	MPI_Gatherv(x, interval, MPI_DOUBLE, io_xi, count, displ, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	MPI_Gatherv(fx, interval, MPI_DOUBLE, io_yi, count, displ, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-
+	MPI_Barrier (MPI_COMM_WORLD);
+	time_without_writing = total_time + MPI_Wtime();
 
 	/* Write the ouput data */
 	if(rank == 0) {
@@ -212,17 +214,23 @@ int main (int argc, char *argv[]) {
 
 
 	MPI_Barrier (MPI_COMM_WORLD);
-	time += MPI_Wtime();				// Stop the time count
+	total_time += MPI_Wtime();				// Stop the time count
 
 
 
-	// Evaluate max time spent to execute the program.
-	double max_time = 0;
-	double min_time = 0;
-	MPI_Reduce(&time, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);	// Obtained the maximum time spent
-	MPI_Reduce(&time, &min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);	// Obtained the minimum time spent
+	// Evaluate time spent to execute the program.
+	double max_total_time = 0;
+	double min_total_time = 0;
+	MPI_Reduce(&total_time, &max_total_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);	// Obtained the maximum time spent
+	MPI_Reduce(&total_time, &min_total_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);	// Obtained the minimum time spent
+	double max_time_without_writing = 0;
+	double min_time_without_writing = 0;
+	MPI_Reduce(&time_without_writing, &max_time_without_writing, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);	// Obtained the maximum time spent without writing
+	MPI_Reduce(&time_without_writing, &min_time_without_writing, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);	// Obtained the minimum time spent without writing
 	if (rank == 0) {
-		printf("Maximum wall clock time: %f\nMinimum wall clock time: %f\n", max_time, min_time);
+		printf("\nWALL CLOCK TIME:\n");
+		printf("\t(With writing)\t\tMaximum: %f\tMinimum: %f\n", max_total_time, min_total_time);
+		printf("\t(Without writing)\tMaximum: %f\tMinimum: %f\n\n", max_time_without_writing, min_time_without_writing);
 	}
 
 

@@ -14,7 +14,6 @@ MAINO = ./pcsi
 PRERUNFLAGS = -np 3
 POSTRUNFLAGS = -fi "./input.txt" -s 0.1 -fo "./output.txt"
 
-
 install:
 	sudo apt install mpich
 
