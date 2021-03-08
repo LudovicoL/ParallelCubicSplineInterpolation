@@ -11,8 +11,9 @@ MAINC = ./pcsi.c
 MAINO = ./pcsi
 
 # Flag to the run:
-PRERUNFLAGS = -np 3
+PRERUNFLAGS = -np 2
 POSTRUNFLAGS = -fi "./input.txt" -s 0.1 -fo "./output.txt"
+
 
 install:
 	sudo apt install mpich
@@ -25,4 +26,4 @@ run:
 	mpirun $(PRERUNFLAGS) $(MAINO) $(POSTRUNFLAGS)
 
 generate:
-	./gen 10 "./input.txt"
+	./gen 10000 "./input.txt"

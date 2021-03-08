@@ -25,9 +25,9 @@ void create_counts_and_displs_with_replications (
 	}
 	
 	*count = (int*) malloc(p * sizeof(int));
-	if(*count == NULL) { fprintf(stderr, "Malloc error (count variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(*count == NULL) { fprintf(stderr, "Malloc error (count variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
 	*disp = (int*) malloc(p * sizeof(int));
-	if(*disp == NULL) { fprintf(stderr, "Malloc error (disp variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(*disp == NULL) { fprintf(stderr, "Malloc error (disp variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
 
 	(*count)[0] = n/p + extra + extra1;
 	(*disp)[0] = 0;
@@ -85,17 +85,17 @@ void parallelThomasAlgorithm (
 
 	// Allocate memory for partial_H matrix
 	partial_HStorage = (double *) calloc(effective_partial_size * H_COLUMNS, sizeof(double));
-	if(partial_HStorage == NULL) { fprintf(stderr, "Calloc error (partial_HStorage variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(partial_HStorage == NULL) { fprintf(stderr, "Calloc error (partial_HStorage variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
 	
 	partial_H = (double **) malloc (effective_partial_size * sizeof(double *));
-	if(partial_H == NULL) { fprintf(stderr, "Malloc error (partial_H variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(partial_H == NULL) { fprintf(stderr, "Malloc error (partial_H variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
 	for(int i = 0; i < effective_partial_size; i++) {
 		partial_H[i] = &partial_HStorage[i*H_COLUMNS];
 	}
 
     // Allocate memory for partial_r vector
 	partial_r = (double*) calloc(effective_partial_size, sizeof(double));
-	if(partial_r == NULL) { fprintf(stderr, "Calloc error (partial_r variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(partial_r == NULL) { fprintf(stderr, "Calloc error (partial_r variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
 
 
 
@@ -127,7 +127,7 @@ void parallelThomasAlgorithm (
 	/* Calculate count and displ, allocate memory for vector r and exchange arrays partial_r to obtain all elements */
 	create_counts_and_displs_with_replications (rank, p, n, 0, &count, &displ);							// without replications
 	r = (double *) calloc(n, sizeof(double));															// Allocate memory for vector r (with all the elements)
-	if(r == NULL) { fprintf(stderr, "Calloc error (r variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(r == NULL) { fprintf(stderr, "Calloc error (r variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
     
 	MPI_Allgatherv(partial_r, count[rank], MPI_DOUBLE, r, count, displ, MPI_DOUBLE, MPI_COMM_WORLD);	// Echange vectors partial_r
 
@@ -141,10 +141,10 @@ void parallelThomasAlgorithm (
 	}
 
 	HStorage = (double *) calloc(n * H_COLUMNS, sizeof(double));			// Allocate memory for matrix H (with all the elements)
-	if(partial_HStorage == NULL) { fprintf(stderr, "Calloc error (HStorage variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(partial_HStorage == NULL) { fprintf(stderr, "Calloc error (HStorage variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
     
 	H = (double **) malloc (n * sizeof(double *));
-	if(partial_H == NULL) { fprintf(stderr, "Malloc error (H variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(partial_H == NULL) { fprintf(stderr, "Malloc error (H variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
 	for(int i = 0; i < n; i++) {
 		H[i] = &HStorage[i*H_COLUMNS];
 	}
@@ -155,13 +155,13 @@ void parallelThomasAlgorithm (
 
 	/* Allocate memory for coefficients vectors  */
 	alpha = (double*) calloc(n, sizeof(double));
-	if(alpha == NULL) { fprintf(stderr, "Calloc error (alpha variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(alpha == NULL) { fprintf(stderr, "Calloc error (alpha variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
 
 	beta  = (double*) calloc(n, sizeof(double));
-	if(beta == NULL) { fprintf(stderr, "Calloc error (beta variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(beta == NULL) { fprintf(stderr, "Calloc error (beta variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
 
 	gamma = (double*) calloc(n, sizeof(double));
-	if(gamma == NULL) { fprintf(stderr, "Calloc error (gamma variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(gamma == NULL) { fprintf(stderr, "Calloc error (gamma variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
 
 	
 
@@ -189,7 +189,7 @@ void parallelThomasAlgorithm (
 
 	/* Allocate memory and calculate total m */
 	total_m = (double*) calloc(n, sizeof(double));
-	if(total_m == NULL) { fprintf(stderr, "Calloc error (total_m variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(total_m == NULL) { fprintf(stderr, "Calloc error (total_m variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
 
 	total_m[n-1] = gamma[n-1];
 	for(int i = n-2; i >= 0; i--) {
@@ -207,7 +207,7 @@ void parallelThomasAlgorithm (
 	}
 
 	*m = (double*) calloc(m_size, sizeof(double));
-	if(*m == NULL) { fprintf(stderr, "Calloc error (*m variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(*m == NULL) { fprintf(stderr, "Calloc error (*m variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
 
 	// Assign the values of total_m to m (this reduce the space in memory because each process will need only a few elements)
 	for(int i = 0; i < m_size; i++) {
@@ -243,62 +243,67 @@ void parallelCubicSplineInterpolation (
 	double b;
 	double d;
 	
-	int k;								// Index to scroll xi and yi
-	double first_x = 0;
-	double first_y = 0;
+	// The following three assignments hold when p is equal to 1:
+	int k = 0;								// Index to scroll xi and yi
+	double first_x = xi[0];
+	double first_y = yi[0];
 	
-	if(rank == 0) {
-		k = 0;
-		first_x = xi[0];
-		first_y = yi[0];
-		if(step >= 1){
-			*interval = (xi[effective_partial_size] - xi[0]) * step;
-		} else {
-			*interval = (xi[effective_partial_size] - xi[0]) / step;
+	if(p > 1) {
+		if(rank == 0) {
+			k = 0;
+			first_x = xi[0];
+			first_y = yi[0];
+			if(step >= 1){
+				*interval = (xi[effective_partial_size] - xi[0]) * step;
+			} else {
+				*interval = (xi[effective_partial_size] - xi[0]) / step;
+			}
+		}
+		if(rank != p - 1 && rank != 0) {
+			k = 1;
+			first_x = xi[1];
+			first_y = yi[1];
+			if(step >= 1){
+				*interval = (xi[effective_partial_size+1] - xi[1]) * step;
+			} else {
+				*interval = (xi[effective_partial_size+1] - xi[1]) / step;
+			}
+		}
+		if(rank == p - 1) {
+			k = 1;
+			first_x = xi[1];
+			first_y = yi[1];
+			if(step >= 1){
+				*interval = ((xi[effective_partial_size] - xi[1]) * step) + 1;
+			} else {
+				*interval = ((xi[effective_partial_size] - xi[1]) / step) + 1;
+			}
 		}
 	}
-	if(rank != p - 1 && rank != 0) {
-		k = 1;
-		first_x = xi[1];
-		first_y = yi[1];
-		if(step >= 1){
-			*interval = (xi[effective_partial_size+1] - xi[1]) * step;
-		} else {
-		*interval = (xi[effective_partial_size+1] - xi[1]) / step;
-		}
-	}
-	if(rank == p - 1) {
-		k = 1;
-		first_x = xi[1];
-		first_y = yi[1];
-		if(step >= 1){
-			*interval = ((xi[effective_partial_size] - xi[1]) * step) + 1;
-		} else {
-			*interval = ((xi[effective_partial_size] - xi[1]) / step) + 1;
-		}
-	}
 	
-	
+
 	/* Allocate memory and calculate x and fx */
 	*x = (double*) calloc(*interval, sizeof(double));
-	if(*x == NULL) { fprintf(stderr, "Calloc error (x variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(*x == NULL) { fprintf(stderr, "Calloc error (x variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
 
 	*fx = (double*) calloc(*interval, sizeof(double));
-	if(*fx == NULL) { fprintf(stderr, "Calloc error (gx variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(*fx == NULL) { fprintf(stderr, "Calloc error (gx variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
 	
 	(*x)[0] = first_x;
 	(*fx)[0] = first_y;
+	b = (((yi[k+1] - yi[k]) / (xi[k+1] - xi[k])) - (((xi[k+1] - xi[k])/2) * m[0]) - (((xi[k+1] - xi[k]) / 6) * (m[1] - m[0])));
+	d = (m[1]-m[0])/(6*(xi[k+1] - xi[k]));
+
 	for(int i = 1, j = 0; i < *interval; i++) {
 		(*x)[i] = (*x)[i-1] + step;
 		if(IS_EQUAL((*x)[i], xi[k+1])) {
 			k++;
 			j++;
+			b = (((yi[k+1] - yi[k]) / (xi[k+1] - xi[k])) - (((xi[k+1] - xi[k])/2) * m[j]) - (((xi[k+1] - xi[k]) / 6) * (m[j+1] - m[j])));
+			d = (m[j+1]-m[j])/(6*(xi[k+1] - xi[k]));
 			(*fx)[i] = yi[k];
 			continue;
 		}
-		
-		b = (((yi[k+1] - yi[k]) / (xi[k+1] - xi[k])) - (((xi[k+1] - xi[k])/2) * m[j]) - (((xi[k+1] - xi[k]) / 6) * (m[j+1] - m[j])));
-		d = (m[j+1]-m[j])/(6*(xi[k+1] - xi[k]));
 		(*fx)[i] = (yi[k] + b*((*x)[i] - xi[k]) + (m[j]/2) * pow((*x)[i] - xi[k], 2) + d * pow((*x)[i] - xi[k], 3));
 		//         - a[k] -                       --c[k]--
 	}

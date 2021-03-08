@@ -52,8 +52,6 @@ int main (int argc, char *argv[]) {
 		}
 	}
 
-
-
 	/* Start MPI */
 	MPI_Init(&argc, &argv);
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -66,6 +64,11 @@ int main (int argc, char *argv[]) {
 
 	/* Read the input data */
 	if(rank == 0) {
+		if(step <= 0) {
+			fprintf(stderr, "ERROR: Step-size can't be negative or equal to zero!\n");
+			return -1;
+		}
+
 		// Open the input file
 		if((source = fopen(filename_input, "rt")) == NULL) {
 			printf("Error with input fopen!\n");
@@ -74,27 +77,33 @@ int main (int argc, char *argv[]) {
 		}
 
 		if(fscanf(source, "%d", &n) != 1) {		// Read the number of elements n
-			fprintf(stderr, "Expected one number as input for n value!\n");
+			fprintf(stderr, "ERROR: Expected one number as input for n value!\n");
+			MPI_Abort(MPI_COMM_WORLD, -1);
+			return -1;
+		}
+
+		if(p > n) {
+			fprintf(stderr, "ERROR: Number of processes can't be greater than n!\n");
 			MPI_Abort(MPI_COMM_WORLD, -1);
 			return -1;
 		}
 
 		io_xi = (double*) malloc(n * sizeof(double));
-		if(io_xi == NULL) { fprintf(stderr, "Malloc error (io_xi variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return -1; }
+		if(io_xi == NULL) { fprintf(stderr, "Malloc error (io_xi variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return -1; }
 
 		io_yi = (double*) malloc(n * sizeof(double));
-		if(io_yi == NULL) { fprintf(stderr, "Malloc error (io_yi variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return -1; }
+		if(io_yi == NULL) { fprintf(stderr, "Malloc error (io_yi variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return -1; }
 		
 		for(int i = 0; i < n; i++) {			// Read xi-coordinates
 			if(fscanf(source, "%lf", &io_xi[i]) != 1) {
-				fprintf(stderr, "Expected one number as input for io_xi array!\n");
+				fprintf(stderr, "ERROR: Expected one number as input for io_xi array!\n");
 				MPI_Abort(MPI_COMM_WORLD, -1);
 				return -1;
 			}
 		}
 		for(int i = 0; i < n; i++) {			// Read yi-coordinates
 			if(fscanf(source, "%lf", &io_yi[i]) != 1) {
-				fprintf(stderr, "Expected one number as input for io_yi array!\n");
+				fprintf(stderr, "ERROR: Expected one number as input for io_yi array!\n");
 				MPI_Abort(MPI_COMM_WORLD, -1);
 				return -1;
 			}
@@ -107,6 +116,10 @@ int main (int argc, char *argv[]) {
 		} else {
 			total_n = ((io_xi[n-1]-io_xi[0]) / step) + 1;
 		}
+
+		if(p == 1) {							// If there is just a process that execute the program
+			interval = total_n;
+		}
 	}
 
 
@@ -116,10 +129,10 @@ int main (int argc, char *argv[]) {
 	create_counts_and_displs_with_replications (rank, p, n, 1, &count, &displ);
 	
 	xi = (double*) malloc(count[rank] * sizeof(double));
-	if(xi == NULL) { fprintf(stderr, "Malloc error (xi variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return -1; }
+	if(xi == NULL) { fprintf(stderr, "Malloc error (xi variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return -1; }
 	
 	yi = (double*) malloc(count[rank] * sizeof(double));
-	if(yi == NULL) { fprintf(stderr, "Malloc error (yi variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return -1; }
+	if(yi == NULL) { fprintf(stderr, "Malloc error (yi variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return -1; }
 	
 	
 
@@ -172,10 +185,10 @@ int main (int argc, char *argv[]) {
 		}
 
 		io_xi = (double*) malloc(total_n * sizeof(double));
-		if(io_xi == NULL) { fprintf(stderr, "Malloc error (io_xi variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return -1; }
+		if(io_xi == NULL) { fprintf(stderr, "Malloc error (io_xi variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return -1; }
 		
 		io_yi = (double*) malloc(total_n * sizeof(double));
-		if(io_yi == NULL) { fprintf(stderr, "Malloc error (io_yi variable)!"); MPI_Abort(MPI_COMM_WORLD, -1); return -1; }
+		if(io_yi == NULL) { fprintf(stderr, "Malloc error (io_yi variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return -1; }
 		
 
 	}
