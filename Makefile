@@ -16,6 +16,7 @@ POSTRUNFLAGS = -fi "./input.txt" -s 0.1 -fo "./output.txt"
 
 
 install:
+	sudo apt install build-essential
 	sudo apt install mpich
 
 compile:
