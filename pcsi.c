@@ -71,7 +71,7 @@ int main (int argc, char *argv[]) {
 
 		// Open the input file
 		if((source = fopen(filename_input, "rt")) == NULL) {
-			printf("Error with input fopen!\n");
+			fprintf(stderr, "Error with input fopen!\n");
 			MPI_Abort(MPI_COMM_WORLD, -1);
 			return -1;
 		}
@@ -84,6 +84,12 @@ int main (int argc, char *argv[]) {
 
 		if(p > n) {
 			fprintf(stderr, "ERROR: Number of processes can't be greater than n!\n");
+			MPI_Abort(MPI_COMM_WORLD, -1);
+			return -1;
+		}
+
+		if(n < 2) {
+			fprintf(stderr, "ERROR: n can't be less than 2!\n");
 			MPI_Abort(MPI_COMM_WORLD, -1);
 			return -1;
 		}
@@ -203,7 +209,7 @@ int main (int argc, char *argv[]) {
 	if(rank == 0) {
 		// Open the output file
 		if((source = fopen(filename_output, "wt")) == NULL) {
-			printf("Error with output fopen!\n");
+			fprintf(stderr, "Error with output fopen!\n");
 			MPI_Abort(MPI_COMM_WORLD, -1);
 			return -1;
 		}
@@ -242,8 +248,8 @@ int main (int argc, char *argv[]) {
 	MPI_Reduce(&time_without_writing, &min_time_without_writing, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);	// Obtained the minimum time spent without writing
 	if (rank == 0) {
 		printf("\nWALL CLOCK TIME:\n");
-		printf("\t(With writing)\t\tMaximum: %f\tMinimum: %f\n", max_total_time, min_total_time);
-		printf("\t(Without writing)\tMaximum: %f\tMinimum: %f\n\n", max_time_without_writing, min_time_without_writing);
+		printf("\tTotal time\tMaximum: %f\tMinimum: %f\n", max_total_time, min_total_time);
+		printf("\tComputation\tMaximum: %f\tMinimum: %f\n\n", max_time_without_writing, min_time_without_writing);
 	}
 
 

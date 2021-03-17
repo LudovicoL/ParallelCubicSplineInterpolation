@@ -21,10 +21,14 @@ install:
 
 compile:
 	gcc ./gen_vectors.c -o ./gen
+	gcc $(PREFLAGS) ./scsi.c -o ./scsi $(POSTFLAGS)
 	mpicc $(PREFLAGS) $(FUNC) $(MAINC) -o $(MAINO) $(POSTFLAGS)
 	
 run: 
 	mpirun $(PRERUNFLAGS) $(MAINO) $(POSTRUNFLAGS)
+
+srun:
+	./scsi $(POSTRUNFLAGS)
 
 generate:
 	./gen 10000 "./input.txt"
