@@ -7,9 +7,12 @@
 #define H_COLUMNS 3																// number of columns of H matrix
 #define DBL_EPSILON 0.00001														// to compare two double
 #define IS_EQUAL(x, y) 			(((fabs(x-y)) < (DBL_EPSILON)) ? (1) : (0))		// to compare two double
+#define getName(variable) 		#variable										// return variable name
+
 
 void ThomasAlgorithm (int n, double *xi, double *yi, double **m);
 void CubicSplineInterpolation (double step, double *xi, double *yi, double *m, double **x, double **fx, int interval);
+void checkMalloc (char *name);
 
 
 int main (int argc, char *argv[]) {
@@ -17,7 +20,6 @@ int main (int argc, char *argv[]) {
     int n;								// number of input elements
 
     struct timeval begin, total_time, time_without_writing;
-
 
     FILE *source = NULL;
 	char *filename_input = "./input.txt";		            // name of input file (default: "./input.txt")
@@ -34,6 +36,9 @@ int main (int argc, char *argv[]) {
 	double *x = NULL;				// array of x-coordinate of Cubic Spline Interpolation
 	double *fx = NULL;				// array of y-coordinate of Cubic Spline Interpolation
 
+	char write_output = 'n';		// save results in a file
+	int help = 0;					// show commands list
+
     /* Command-line options */
 	for (int i=0; i<argc; i++) {
 		if (strcmp(argv[i], "-fi") == 0) {
@@ -45,6 +50,17 @@ int main (int argc, char *argv[]) {
 		if (strcmp(argv[i], "-fo") == 0) {
 			filename_output = argv[i+1];
 		}
+		if (strcmp(argv[i], "-o") == 0) {
+			write_output = *argv[i+1];
+		}
+		if (strcmp(argv[i], "-help") == 0) {
+			help = 1;
+		}
+	}
+
+	if(help) {
+		printf("\nCOMMANDS LIST:\n-fi: set an input filename.\n-fo: set an output filename.\n-s: set a step-size.\n-o: save results in a file (n/y).\n\n");
+		return 0;
 	}
 
     gettimeofday(&begin, 0);
@@ -71,10 +87,10 @@ int main (int argc, char *argv[]) {
 	}
 
     xi = (double*) malloc(n * sizeof(double));
-	if(xi == NULL) { fprintf(stderr, "Malloc error (xi variable)!\n"); return -1; }
+	if(xi == NULL) { checkMalloc(getName(xi)); return -1; }
 
 	yi = (double*) malloc(n * sizeof(double));
-	if(yi == NULL) { fprintf(stderr, "Malloc error (yi variable)!\n"); return -1; }
+	if(yi == NULL) { checkMalloc(getName(yi)); return -1; }
 
     for(int i = 0; i < n; i++) {			// Read xi-coordinates
 		if(fscanf(source, "%lf", &xi[i]) != 1) {
@@ -109,26 +125,31 @@ int main (int argc, char *argv[]) {
     gettimeofday(&time_without_writing, 0);
 
     /* Write the ouput data */
-	// Open the output file
-	if((source = fopen(filename_output, "wt")) == NULL) {
-		fprintf(stderr, "Error with output fopen!\n");
-		return -1;
+	if(write_output == 'y') {
+		// Open the output file
+		if((source = fopen(filename_output, "wt")) == NULL) {
+			fprintf(stderr, "Error with output fopen!\n");
+			return -1;
+		}
+		fprintf(source,"%d\n", sigma);							// write value of n
+		for(int i = 0; i < sigma; i++) {
+			fprintf(source,"%lf\t%lf\n", x[i], fx[i]);		// write io_xi and io_yi
+		}
+		fclose(source);
 	}
-	fprintf(source,"%d\n", sigma);							// write value of n
-	for(int i = 0; i < sigma; i++) {
-		fprintf(source,"%lf\t%lf\n", x[i], fx[i]);		// write io_xi and io_yi
-	}
-	fclose(source);
 
 	free(x); x = NULL;
 	free(fx); fx = NULL;
 
     gettimeofday(&total_time, 0);
 
-    printf("\nWALL CLOCK TIME:\n");
-	printf("\tTotal time:\t%f\n", (total_time.tv_sec - begin.tv_sec) + ((total_time.tv_usec - begin.tv_usec)*1e-6));
-	printf("\tComputation:\t%f\n\n", (time_without_writing.tv_sec - begin.tv_sec) + ((time_without_writing.tv_usec - begin.tv_usec)*1e-6));
-
+	if(write_output == 'y') {
+		printf("\nWALL CLOCK TIME:\n");
+		printf("\tTotal time:\t%f\n", (total_time.tv_sec - begin.tv_sec) + ((total_time.tv_usec - begin.tv_usec)*1e-6));
+		printf("\tComputation:\t%f\n\n", (time_without_writing.tv_sec - begin.tv_sec) + ((time_without_writing.tv_usec - begin.tv_usec)*1e-6));
+	} else {
+		printf("\nWALL CLOCK TIME:\t%f\n\n", (time_without_writing.tv_sec - begin.tv_sec) + ((time_without_writing.tv_usec - begin.tv_usec)*1e-6));
+	}
     return 0;
 }
 
@@ -152,17 +173,17 @@ void ThomasAlgorithm (
 
 	// Allocate memory for partial_H matrix
 	HStorage = (double *) calloc(n * H_COLUMNS, sizeof(double));
-	if(HStorage == NULL) { fprintf(stderr, "Calloc error (HStorage variable)!\n"); return; }
+	if(HStorage == NULL) { checkMalloc(getName(HStorage)); return; }
 	
 	H = (double **) malloc (n * sizeof(double *));
-	if(H == NULL) { fprintf(stderr, "Malloc error (H variable)!\n"); return; }
+	if(H == NULL) { checkMalloc(getName(H)); return; }
 	for(int i = 0; i < n; i++) {
 		H[i] = &HStorage[i*H_COLUMNS];
 	}
 
     // Allocate memory for partial_r vector
 	r = (double*) calloc(n, sizeof(double));
-	if(r == NULL) { fprintf(stderr, "Calloc error (r variable)!\n"); return; }
+	if(r == NULL) { checkMalloc(getName(r)); return; }
 
 
 	// Calculate matrix H and vector r
@@ -183,13 +204,13 @@ void ThomasAlgorithm (
 
 	/* Allocate memory for coefficients vectors  */
 	alpha = (double*) calloc(n, sizeof(double));
-	if(alpha == NULL) { fprintf(stderr, "Calloc error (alpha variable)!\n"); return; }
+	if(alpha == NULL) { checkMalloc(getName(alpha)); return; }
 
 	beta  = (double*) calloc(n, sizeof(double));
-	if(beta == NULL) { fprintf(stderr, "Calloc error (beta variable)!\n"); return; }
+	if(beta == NULL) { checkMalloc(getName(beta)); return; }
 
 	gamma = (double*) calloc(n, sizeof(double));
-	if(gamma == NULL) { fprintf(stderr, "Calloc error (gamma variable)!\n"); return; }
+	if(gamma == NULL) { checkMalloc(getName(gamma)); return; }
 
 	
 
@@ -210,7 +231,7 @@ void ThomasAlgorithm (
 
 	/* Allocate memory and calculate total m */
 	*m = (double*) calloc(n, sizeof(double));
-	if(*m == NULL) { fprintf(stderr, "Calloc error (m variable)!\n"); return; }
+	if(*m == NULL) { checkMalloc(getName(m)); return; }
 
 	(*m)[n-1] = gamma[n-1];
 	for(int i = n-2; i >= 0; i--) {
@@ -241,10 +262,10 @@ void CubicSplineInterpolation (
 
 	/* Allocate memory and calculate x and fx */
 	*x = (double*) calloc(sigma, sizeof(double));
-	if(*x == NULL) { fprintf(stderr, "Calloc error (x variable)!\n"); return; }
+	if(*x == NULL) { checkMalloc(getName(x)); return; }
 
 	*fx = (double*) calloc(sigma, sizeof(double));
-	if(*fx == NULL) { fprintf(stderr, "Calloc error (gx variable)!\n"); return; }
+	if(*fx == NULL) { checkMalloc(getName(fx)); return; }
 	
 	(*x)[0] = xi[0];
 	(*fx)[0] = yi[0];
@@ -263,4 +284,8 @@ void CubicSplineInterpolation (
 		(*fx)[i] = (yi[k] + b*((*x)[i] - xi[k]) + (m[k]/2) * pow((*x)[i] - xi[k], 2) + d * pow((*x)[i] - xi[k], 3));
 		//         - a[k] -                       --c[k]--
 	}
+}
+
+void checkMalloc (char *name) {
+	fprintf(stderr, "Malloc / Calloc error (%s variable)!\n", name);
 }

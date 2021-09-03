@@ -1,6 +1,14 @@
 #include "MyLibrary.h"
 
 
+void checkMalloc (char *name) {
+	fprintf(stderr, "Malloc / Calloc error (%s variable)!\n", name);
+	MPI_Abort(MPI_COMM_WORLD, -1);
+}
+
+
+
+
 void create_counts_and_displs_with_replications (
 	int rank,     					/* IN - Process rank */
 	int p,        					/* IN - Number of processes */
@@ -12,9 +20,9 @@ void create_counts_and_displs_with_replications (
 {
 	int buff_size = n/p;
 	int more = buff_size + n - buff_size * p;
-	int extra = 0;      // If n is not a multiple of p
-	int extra1 = 0;     // To duplicate some elements between process
-	int extra2 = 0;     // To duplicate some elements between process
+	int extra = 0;					// If n is not a multiple of p
+	int extra1 = 0;					// To duplicate some elements between process
+	int extra2 = 0;					// To duplicate some elements between process
 	if(more > n/p){
 		more -= n/p;
 		extra = 1;
@@ -25,9 +33,9 @@ void create_counts_and_displs_with_replications (
 	}
 	
 	*count = (int*) malloc(p * sizeof(int));
-	if(*count == NULL) { fprintf(stderr, "Malloc error (count variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(*count == NULL) { checkMalloc(getName(count)); }
 	*disp = (int*) malloc(p * sizeof(int));
-	if(*disp == NULL) { fprintf(stderr, "Malloc error (disp variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(*disp == NULL) { checkMalloc(getName(disp)); }
 
 	(*count)[0] = n/p + extra + extra1;
 	(*disp)[0] = 0;
@@ -82,20 +90,20 @@ void parallelThomasAlgorithm (
 
 	int m_size;                          // dimension of partial m (vector that will go out the function)
 
-
 	// Allocate memory for partial_H matrix
 	partial_HStorage = (double *) calloc(effective_partial_size * H_COLUMNS, sizeof(double));
-	if(partial_HStorage == NULL) { fprintf(stderr, "Calloc error (partial_HStorage variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(partial_HStorage == NULL) { checkMalloc(getName(partial_HStorage)); }
 	
 	partial_H = (double **) malloc (effective_partial_size * sizeof(double *));
-	if(partial_H == NULL) { fprintf(stderr, "Malloc error (partial_H variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(partial_H == NULL) { checkMalloc(getName(partial_H)); }
+	
 	for(int i = 0; i < effective_partial_size; i++) {
 		partial_H[i] = &partial_HStorage[i*H_COLUMNS];
 	}
 
     // Allocate memory for partial_r vector
 	partial_r = (double*) calloc(effective_partial_size, sizeof(double));
-	if(partial_r == NULL) { fprintf(stderr, "Calloc error (partial_r variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(partial_r == NULL) { checkMalloc(getName(partial_r)); }
 
 
 
@@ -127,7 +135,7 @@ void parallelThomasAlgorithm (
 	/* Calculate count and displ, allocate memory for vector r and exchange arrays partial_r to obtain all elements */
 	create_counts_and_displs_with_replications (rank, p, n, 0, &count, &displ);							// without replications
 	r = (double *) calloc(n, sizeof(double));															// Allocate memory for vector r (with all the elements)
-	if(r == NULL) { fprintf(stderr, "Calloc error (r variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(r == NULL) { checkMalloc(getName(r)); }
     
 	MPI_Allgatherv(partial_r, count[rank], MPI_DOUBLE, r, count, displ, MPI_DOUBLE, MPI_COMM_WORLD);	// Echange vectors partial_r
 
@@ -141,10 +149,11 @@ void parallelThomasAlgorithm (
 	}
 
 	HStorage = (double *) calloc(n * H_COLUMNS, sizeof(double));			// Allocate memory for matrix H (with all the elements)
-	if(partial_HStorage == NULL) { fprintf(stderr, "Calloc error (HStorage variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(HStorage == NULL) { checkMalloc(getName(HStorage)); }
     
 	H = (double **) malloc (n * sizeof(double *));
-	if(partial_H == NULL) { fprintf(stderr, "Malloc error (H variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(H == NULL) { checkMalloc(getName(H)); }
+
 	for(int i = 0; i < n; i++) {
 		H[i] = &HStorage[i*H_COLUMNS];
 	}
@@ -155,13 +164,13 @@ void parallelThomasAlgorithm (
 
 	/* Allocate memory for coefficients vectors  */
 	alpha = (double*) calloc(n, sizeof(double));
-	if(alpha == NULL) { fprintf(stderr, "Calloc error (alpha variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(alpha == NULL) { checkMalloc(getName(alpha)); }
 
 	beta  = (double*) calloc(n, sizeof(double));
-	if(beta == NULL) { fprintf(stderr, "Calloc error (beta variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(beta == NULL) { checkMalloc(getName(beta)); }
 
 	gamma = (double*) calloc(n, sizeof(double));
-	if(gamma == NULL) { fprintf(stderr, "Calloc error (gamma variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(gamma == NULL) { checkMalloc(getName(gamma)); }
 
 	
 
@@ -177,7 +186,6 @@ void parallelThomasAlgorithm (
 
 
 
-
 	free(H); free(HStorage); H = NULL; HStorage = NULL;
 	free(partial_H); free(partial_HStorage); partial_H = NULL; partial_HStorage = NULL;
 	free(partial_r); partial_r = NULL;
@@ -189,7 +197,7 @@ void parallelThomasAlgorithm (
 
 	/* Allocate memory and calculate total m */
 	total_m = (double*) calloc(n, sizeof(double));
-	if(total_m == NULL) { fprintf(stderr, "Calloc error (total_m variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(total_m == NULL) { checkMalloc(getName(total_m)); }
 
 	total_m[n-1] = gamma[n-1];
 	for(int i = n-2; i >= 0; i--) {
@@ -207,7 +215,7 @@ void parallelThomasAlgorithm (
 	}
 
 	*m = (double*) calloc(m_size, sizeof(double));
-	if(*m == NULL) { fprintf(stderr, "Calloc error (*m variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(*m == NULL) { checkMalloc(getName(m)); }
 
 	// Assign the values of total_m to m (this reduce the space in memory because each process will need only a few elements)
 	for(int i = 0; i < m_size; i++) {
@@ -284,10 +292,10 @@ void parallelCubicSplineInterpolation (
 
 	/* Allocate memory and calculate x and fx */
 	*x = (double*) calloc(*sigma_i, sizeof(double));
-	if(*x == NULL) { fprintf(stderr, "Calloc error (x variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(*x == NULL) { checkMalloc(getName(x)); }
 
 	*fx = (double*) calloc(*sigma_i, sizeof(double));
-	if(*fx == NULL) { fprintf(stderr, "Calloc error (gx variable)!\n"); MPI_Abort(MPI_COMM_WORLD, -1); return; }
+	if(*fx == NULL) { checkMalloc(getName(fx)); }
 	
 	(*x)[0] = first_x;
 	(*fx)[0] = first_y;

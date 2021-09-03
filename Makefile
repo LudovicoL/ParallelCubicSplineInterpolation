@@ -1,3 +1,4 @@
+.DEFAULT_GOAL := run
 # Pre-options to compile the files:
 PREFLAGS = -O3
 # Post-options to compile the files:
@@ -12,7 +13,8 @@ MAINO = ./pcsi
 
 # Flag to the run:
 PRERUNFLAGS = -np 2
-POSTRUNFLAGS = -fi "./input.txt" -s 0.1 -fo "./output.txt"
+POSTRUNFLAGS = -fi "./input.txt" -s 0.1 -fo "./output.txt" -o n
+HELPFLAGS = -help
 
 
 install:
@@ -31,4 +33,7 @@ srun:
 	./scsi $(POSTRUNFLAGS)
 
 generate:
-	./gen 10000 "./input.txt"
+	./gen 100000 "./input.txt"
+
+help:
+	mpirun $(PRERUNFLAGS) $(MAINO) $(HELPFLAGS)
